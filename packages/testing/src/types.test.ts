@@ -1,5 +1,5 @@
 import { describe, it, expectTypeOf } from 'vitest';
-import { crmWorkflow } from '../../../examples/crm/src/lumina/workflow.ts';
+import { crmWorkflow } from '../../../examples/crm/src/lumina/workflow';
 import { createFSMFromDefinition } from '@lumina/memory';
 
 describe('TypeScript Compilation & Type-Safety Tests', () => {

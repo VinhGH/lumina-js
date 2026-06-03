@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { crmWorkflow } from '../../../examples/crm/src/lumina/workflow.ts';
+import { crmWorkflow } from '../../../examples/crm/src/lumina/workflow';
 import { WorkflowValidator } from '@lumina/workflow';
 import { createFSMFromDefinition } from '@lumina/memory';
 

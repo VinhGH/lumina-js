@@ -15,6 +15,13 @@
   "author": "Vinh Thái (V_Lumina)",
   "license": "MIT",
   "packageManager": "pnpm@10.33.4",
+  "dependencies": {
+    "@lumina/workflow": "workspace:*",
+    "@lumina/memory": "workspace:*",
+    "@lumina/contracts": "workspace:*",
+    "@lumina/tools": "workspace:*",
+    "@lumina/adapters": "workspace:*"
+  },
   "devDependencies": {
     "turbo": "^2.5.4",
     "tsup": "^8.5.1",

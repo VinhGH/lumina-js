@@ -23,8 +23,8 @@ export type WorkflowDefinition = {
   id: string;
   name: string;
   version: string;
-  states: WorkflowStateId[];
-  transitions: WorkflowTransition[];
+  readonly states: readonly WorkflowStateId[];
+  readonly transitions: readonly WorkflowTransition[];
   initialState: WorkflowStateId;
   statePolicies?: Record<WorkflowStateId, StatePolicy>;
   metadata?: Record<string, unknown>;

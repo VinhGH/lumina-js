@@ -7,6 +7,22 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@lumina/adapters':
+        specifier: workspace:*
+        version: link:packages/adapters
+      '@lumina/contracts':
+        specifier: workspace:*
+        version: link:packages/contracts
+      '@lumina/memory':
+        specifier: workspace:*
+        version: link:packages/memory
+      '@lumina/tools':
+        specifier: workspace:*
+        version: link:packages/tools
+      '@lumina/workflow':
+        specifier: workspace:*
+        version: link:packages/workflow
     devDependencies:
       tsup:
         specifier: ^8.5.1
@@ -214,12 +230,24 @@ importers:
 
   packages/testing:
     dependencies:
+      '@lumina/adapters':
+        specifier: workspace:*
+        version: link:../adapters
       '@lumina/contracts':
         specifier: workspace:*
         version: link:../contracts
       '@lumina/core':
         specifier: workspace:*
         version: link:../core
+      '@lumina/memory':
+        specifier: workspace:*
+        version: link:../memory
+      '@lumina/tools':
+        specifier: workspace:*
+        version: link:../tools
+      '@lumina/workflow':
+        specifier: workspace:*
+        version: link:../workflow
     devDependencies:
       tsup:
         specifier: '*'
