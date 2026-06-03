@@ -1,16 +1,22 @@
 {
   "name": "lumina-js",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "1.0.0-alpha",
+  "description": "AI Runtime for Workflow-Aware Web Applications",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["ai", "runtime", "workflow", "llm", "browser-agent"],
+  "author": "Vinh Thái (V_Lumina)",
+  "license": "MIT",
   "packageManager": "pnpm@10.33.4",
   "devDependencies": {
+    "turbo": "^2.5.4",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.5"

@@ -1,0 +1,38 @@
+{
+  "name": "@lumina/retrieval",
+  "version": "1.0.0-alpha",
+  "description": "Semantic Interaction Retrieval (SIR) — DOM Scouter, Intent Matching, Interaction Graph, Top-5 Candidate Generation",
+  "private": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@lumina/contracts": "workspace:*",
+    "@lumina/adapters": "workspace:*",
+    "fuse.js": "^7.0.0",
+    "minisearch": "^7.1.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "tsup": "*",
+    "typescript": "*",
+    "vitest": "*"
+  },
+  "license": "MIT"
+}

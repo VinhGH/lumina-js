@@ -1,0 +1,29 @@
+{
+  "name": "learn-proof-example",
+  "version": "1.0.0-alpha",
+  "description": "Learn Proof — Lumina.js Validation Platform",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "tsc --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@lumina/contracts": "workspace:*",
+    "@lumina/core": "workspace:*",
+    "@lumina/memory": "workspace:*",
+    "@lumina/react": "workspace:*",
+    "@lumina/workflow": "workspace:*",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "typescript": "*",
+    "vite": "^5.4.0"
+  }
+}

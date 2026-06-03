@@ -1,0 +1,40 @@
+{
+  "name": "@lumina/testing",
+  "version": "1.0.0-alpha",
+  "description": "Invariant Test Infrastructure for Lumina.js — TDD fixtures, invariant tests, test utilities",
+  "private": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@lumina/contracts": "workspace:*",
+    "@lumina/core": "workspace:*",
+    "@lumina/workflow": "workspace:*",
+    "@lumina/memory": "workspace:*",
+    "@lumina/tools": "workspace:*",
+    "@lumina/adapters": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "*",
+    "typescript": "*",
+    "vitest": "*"
+  },
+  "keywords": ["lumina", "testing", "invariants", "tdd"],
+  "license": "MIT"
+}

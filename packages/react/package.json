@@ -1,0 +1,41 @@
+{
+  "name": "@lumina/react",
+  "version": "1.0.0-alpha",
+  "description": "React SDK for Lumina.js — hooks and components for workflow-aware AI",
+  "private": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@lumina/contracts": "workspace:*",
+    "@lumina/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "react": "^18.3.0",
+    "tsup": "*",
+    "typescript": "*",
+    "vitest": "*"
+  },
+  "keywords": ["lumina", "react", "hooks", "ai", "workflow"],
+  "license": "MIT"
+}

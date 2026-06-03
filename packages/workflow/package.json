@@ -1,0 +1,32 @@
+{
+  "name": "@lumina/workflow",
+  "version": "1.0.0-alpha",
+  "description": "Workflow DSL, Registry, Validator and Graph for Lumina.js",
+  "private": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@lumina/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "*",
+    "typescript": "*"
+  },
+  "keywords": ["lumina", "workflow", "fsm", "dsl"],
+  "license": "MIT"
+}
