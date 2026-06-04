@@ -1,7 +1,6 @@
 import { createContext, useContext } from 'react';
-import type { GoalState, WorkflowStateId, SecurityContext } from '@lumina/contracts';
-import type { SIRResult } from '@lumina/contracts';
-import type { PlanResult } from '@lumina/core';
+import type { GoalState, WorkflowStateId, SecurityContext, SIRResult, RuntimeAction } from '@lumina/contracts';
+import type { AgentStatus } from '@lumina/core';
 
 export interface LuminaRuntimeState {
   /** Current workflow state */
@@ -10,17 +9,20 @@ export interface LuminaRuntimeState {
   /** User's current goal */
   goalState: GoalState | null;
 
+  /** Current execution status of the agent loop */
+  status: AgentStatus;
+
   /** Latest SIR results */
   lastSIRResult: SIRResult | null;
 
-  /** Latest plan result (proposal — not yet approved) */
-  lastPlanResult: PlanResult | null;
-
-  /** Whether the runtime is currently processing */
-  isProcessing: boolean;
+  /** Action pending human approval in the queue */
+  pendingApproval: RuntimeAction | null;
 
   /** Last error, if any */
   error: Error | null;
+
+  /** Core AgentRuntime instance */
+  runtime: any;
 
   /** Security context (read-only) */
   securityContext: SecurityContext | null;
@@ -35,6 +37,15 @@ export interface LuminaRuntimeActions {
 
   /** Manually advance workflow state */
   advanceState: (toState: WorkflowStateId) => void;
+
+  /** Update target goal business context properties */
+  updateGoalContext: (context: Record<string, any>) => void;
+
+  /** Approve the current pending human-in-the-loop action */
+  confirmPendingAction: () => Promise<void>;
+
+  /** Reject the current pending human-in-the-loop action */
+  rejectPendingAction: () => void;
 }
 
 export type LuminaContextValue = LuminaRuntimeState & LuminaRuntimeActions;

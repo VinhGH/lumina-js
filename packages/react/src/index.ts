@@ -8,6 +8,8 @@ export type {
   LuminaRuntimeActions,
   LuminaContextValue,
 } from './context/lumina-context.js';
+export { LuminaProvider } from './context/lumina-provider.js';
+export type { LuminaProviderProps } from './context/lumina-provider.js';
 
 // ─── Hooks ───────────────────────────────────────────────────────────────────
 export { useLumina } from './hooks/useLumina.js';

@@ -3,7 +3,7 @@
 
 import { useState, useCallback } from 'react';
 import { useLuminaContext } from '../context/lumina-context.js';
-import type { PlanResult } from '@lumina/core';
+import type { RuntimeAction } from '@lumina/contracts';
 
 export interface UseIntentReturn {
   /** Submit a natural language intent */
@@ -15,8 +15,8 @@ export interface UseIntentReturn {
   /** Whether the intent is being processed */
   isProcessing: boolean;
 
-  /** Last plan result from the Planner */
-  lastPlanResult: PlanResult | null;
+  /** Action currently pending human approval */
+  pendingApproval: RuntimeAction | null;
 
   /** Last error during intent processing */
   error: Error | null;
@@ -45,7 +45,7 @@ export interface UseIntentReturn {
  * ```
  */
 export function useIntent(): UseIntentReturn {
-  const { submitIntent: runtimeSubmit, isProcessing, lastPlanResult, error } = useLuminaContext();
+  const { submitIntent: runtimeSubmit, status, pendingApproval, error } = useLuminaContext();
   const [currentIntent, setCurrentIntent] = useState<string | null>(null);
   const [localError, setLocalError] = useState<Error | null>(null);
 
@@ -63,11 +63,13 @@ export function useIntent(): UseIntentReturn {
     setLocalError(null);
   }, []);
 
+  const isProcessing = status === 'scanning' || status === 'planning' || status === 'executing';
+
   return {
     submitIntent,
     currentIntent,
     isProcessing,
-    lastPlanResult,
+    pendingApproval,
     error: localError ?? error,
     clearError,
   };

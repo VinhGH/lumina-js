@@ -126,63 +126,96 @@ function getMockPlanResult(intent: string, candidate: MockSIRResult['candidates'
   };
 }
 
+import React, { useState, useRef, useEffect } from 'react';
+import type { AppPage } from '../store/app-store.js';
+import { useLumina } from '@lumina/react';
+
 interface LuminaPanelProps {
   currentPage: AppPage;
 }
 
 export function LuminaPanel({ currentPage }: LuminaPanelProps) {
+  const {
+    status,
+    lastSIRResult,
+    pendingApproval,
+    error,
+    submitIntent,
+    confirmPendingAction,
+    rejectPendingAction,
+    runtime,
+  } = useLumina();
+
   const [intent, setIntent] = useState('');
-  const [isRunning, setIsRunning] = useState(false);
-  const [activeStep, setActiveStep] = useState<string | null>(null);
-  const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
-  const [sirResult, setSIRResult] = useState<MockSIRResult | null>(null);
-  const [planResult, setPlanResult] = useState<MockPlanResult | null>(null);
+  const [logs, setLogs] = useState<Array<{ time: string; event: string; status: 'ok' | 'warn' | 'error' }>>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const formatTime = () => {
+      const now = new Date();
+      return `${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}.${String(now.getMilliseconds()).padStart(3, '0')}`;
+    };
+
+    const unsub1 = runtime.eventBus.on('loop-started', ({ intent }) => {
+      setLogs([{ time: formatTime(), event: `Intent received: "${intent}"`, status: 'ok' }]);
+    });
+
+    const unsub2 = runtime.eventBus.on('scan-complete', (result) => {
+      setLogs((prev) => [
+        ...prev,
+        { time: formatTime(), event: `SIR Pipeline: Scan complete (${result.durationMs}ms)`, status: 'ok' }
+      ]);
+    });
+
+    const unsub3 = runtime.eventBus.on('plan-created', (action) => {
+      setLogs((prev) => [
+        ...prev,
+        { time: formatTime(), event: `Planner: ${action.type} proposed (confidence: ${(action.confidence * 100).toFixed(0)}%)`, status: 'ok' }
+      ]);
+    });
+
+    const unsub4 = runtime.eventBus.on('approval-required', ({ decision }) => {
+      setLogs((prev) => [
+        ...prev,
+        { time: formatTime(), event: `PolicyEngine: Approval required (risk: ${decision.riskLevel})`, status: 'warn' }
+      ]);
+    });
+
+    const unsub5 = runtime.eventBus.on('action-executed', ({ action }) => {
+      setLogs((prev) => [
+        ...prev,
+        { time: formatTime(), event: `Action executed: ${action.type}`, status: 'ok' }
+      ]);
+    });
+
+    const unsub6 = runtime.eventBus.on('state-transition', ({ toState }) => {
+      setLogs((prev) => [
+        ...prev,
+        { time: formatTime(), event: `FSM transition: -> ${toState}`, status: 'ok' }
+      ]);
+    });
+
+    const unsub7 = runtime.eventBus.on('error', (err) => {
+      setLogs((prev) => [
+        ...prev,
+        { time: formatTime(), event: `Error: ${err.message}`, status: 'error' }
+      ]);
+    });
+
+    return () => {
+      unsub1();
+      unsub2();
+      unsub3();
+      unsub4();
+      unsub5();
+      unsub6();
+      unsub7();
+    };
+  }, [runtime]);
 
   const runPipeline = async () => {
     if (!intent.trim() || isRunning) return;
-
-    setIsRunning(true);
-    setSIRResult(null);
-    setPlanResult(null);
-    setCompletedSteps(new Set());
-
-    const steps = ['scouter', 'intent', 'graph', 'planner', 'security'];
-
-    for (let i = 0; i < steps.length; i++) {
-      const step = steps[i]!;
-      setActiveStep(step);
-      await new Promise((r) => setTimeout(r, 300 + Math.random() * 200));
-
-      // After graph step, show SIR results
-      if (step === 'graph') {
-        const result = getMockSIRResult(intent, currentPage);
-        setSIRResult(result);
-      }
-
-      // After security step, show plan result
-      if (step === 'security' && sirResult !== null) {
-        // sirResult might not be updated yet due to closure, recompute
-        const result = getMockSIRResult(intent, currentPage);
-        const topCandidate = result.candidates[0];
-        if (topCandidate) {
-          setPlanResult(getMockPlanResult(intent, topCandidate));
-        }
-      }
-
-      setCompletedSteps((prev) => new Set([...prev, step]));
-    }
-
-    // Final: compute plan from fresh SIR result
-    const finalSIR = getMockSIRResult(intent, currentPage);
-    setSIRResult(finalSIR);
-    const topCandidate = finalSIR.candidates[0];
-    if (topCandidate) {
-      setPlanResult(getMockPlanResult(intent, topCandidate));
-    }
-
-    setActiveStep(null);
-    setIsRunning(false);
+    await submitIntent(intent);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -192,17 +225,18 @@ export function LuminaPanel({ currentPage }: LuminaPanelProps) {
     }
   };
 
-  const totalMs = sirResult
-    ? sirResult.stagesMs.scouter + sirResult.stagesMs.intentMatch + sirResult.stagesMs.graphRank
-    : null;
+  const isRunning = status === 'scanning' || status === 'planning' || status === 'executing';
 
   return (
     <aside className="lumina-panel">
       <div className="lumina-panel-header">
         <div className="lumina-panel-title">
-          <div className="lumina-status-dot" />
-          Lumina.js Runtime
+          <div className={`lumina-status-dot ${isRunning ? 'running' : status === 'paused-for-approval' ? 'paused' : ''}`} />
+          Lumina.js Agent Runtime
         </div>
+        <span className="badge badge-lumina" style={{ fontSize: '0.7rem' }}>
+          {status.toUpperCase()}
+        </span>
       </div>
 
       <div className="lumina-panel-body">
@@ -226,55 +260,50 @@ export function LuminaPanel({ currentPage }: LuminaPanelProps) {
             disabled={isRunning || !intent.trim()}
           >
             {isRunning ? (
-              <><span className="spinner" style={{ width: 14, height: 14 }} /> Running Pipeline…</>
+              <><span className="spinner" style={{ width: 14, height: 14 }} /> Running Loop…</>
             ) : (
-              <>⚡ Run SIR Pipeline</>
+              <>⚡ Run Agent Loop</>
             )}
           </button>
         </div>
 
-        {/* Pipeline Steps */}
-        <div className="lumina-pipeline">
-          <div className="lumina-candidate-title">Pipeline</div>
-          {PIPELINE_STEPS.map((step) => {
-            const isDone = completedSteps.has(step.id);
-            const isActive = activeStep === step.id;
-            return (
-              <div
-                key={step.id}
-                className={`lumina-pipeline-step ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`}
-              >
-                <div className="lumina-pipeline-icon">
-                  {isDone ? '✓' : isActive ? '◉' : '○'}
-                </div>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.8rem' }}>{step.label}</div>
-                  <div style={{ fontSize: '0.72rem', opacity: 0.7 }}>{step.description}</div>
-                </div>
-                {isDone && step.id === 'graph' && sirResult && (
-                  <span
-                    className="badge badge-lumina"
-                    style={{ marginLeft: 'auto', fontSize: '0.7rem' }}
-                  >
-                    {totalMs}ms
-                  </span>
-                )}
+        {/* Live Logs */}
+        {logs.length > 0 && (
+          <div className="lumina-candidates animate-fade-in" style={{ maxHeight: 150, overflowY: 'auto' }}>
+            <div className="lumina-candidate-title">Audit Trail Event Log</div>
+            {logs.map((entry, idx) => (
+              <div key={idx} style={{
+                display: 'flex',
+                gap: 8,
+                padding: '2px 0',
+                fontSize: '0.72rem',
+                fontFamily: 'var(--font-mono)',
+                borderBottom: '1px solid var(--color-border)',
+              }}>
+                <span style={{ color: 'var(--color-text-muted)', flexShrink: 0 }}>{entry.time}</span>
+                <span style={{
+                  color: entry.status === 'error' ? 'var(--color-error)'
+                    : entry.status === 'warn' ? 'var(--color-warning)'
+                    : 'var(--color-text-secondary)'
+                }}>
+                  {entry.status === 'error' ? '❌' : entry.status === 'warn' ? '⚠' : '✓'} {entry.event}
+                </span>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
 
-        {/* SIR Results */}
-        {sirResult && (
+        {/* SIR Candidates */}
+        {lastSIRResult && lastSIRResult.candidates.length > 0 && (
           <div className="lumina-candidates animate-fade-in">
             <div className="lumina-candidate-title">
-              SIR Top {sirResult.candidates.length} Candidates
+              SIR Candidates ({lastSIRResult.durationMs}ms)
             </div>
-            {sirResult.candidates.map((node, idx) => (
+            {lastSIRResult.candidates.map((node, idx) => (
               <div key={node.luminaId} className="lumina-candidate-node">
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span className="lumina-candidate-label">{node.label}</span>
-                  <span className="lumina-candidate-rank">#{idx + 1} · {(node.score * 100).toFixed(0)}%</span>
+                  <span className="lumina-candidate-rank">#{idx + 1} · {((node.score || 0) * 100).toFixed(0)}%</span>
                 </div>
                 <div className="lumina-candidate-meta">
                   <span className="badge badge-info" style={{ fontSize: '0.7rem' }}>
@@ -288,6 +317,11 @@ export function LuminaPanel({ currentPage }: LuminaPanelProps) {
                       {node.state}
                     </span>
                   )}
+                  {node.semanticType && (
+                    <span className="badge badge-success" style={{ fontSize: '0.7rem' }}>
+                      {node.semanticType}
+                    </span>
+                  )}
                 </div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>
                   {node.luminaId}
@@ -297,29 +331,44 @@ export function LuminaPanel({ currentPage }: LuminaPanelProps) {
           </div>
         )}
 
-        {/* Action Proposal */}
-        {planResult && (
-          <div className="lumina-action-proposal animate-fade-in">
-            <div className="lumina-action-title">
-              🤖 LLM Proposal → Security Check
+        {/* Approval Request / Active Action */}
+        {pendingApproval && (
+          <div className="lumina-action-proposal animate-fade-in" style={{ border: '1px solid var(--color-warning)' }}>
+            <div className="lumina-action-title" style={{ color: 'var(--color-warning)' }}>
+              🔐 Human Approval Required
             </div>
             <div className="lumina-action-code">
-              {`actionType: "${planResult.actionType}"\ntargetId: "${planResult.targetNodeId}"\nrisk: "${planResult.riskLevel}"\nconfidence: ${(planResult.confidence * 100).toFixed(0)}%`}
+              {`actionType: "${pendingApproval.type}"\ntargetId: "${pendingApproval.targetNodeId}"\nconfidence: ${((pendingApproval.confidence || 0) * 100).toFixed(0)}%`}
             </div>
-            <div style={{ display: 'flex', gap: 'var(--spacing-xs)', marginTop: 'var(--spacing-sm)', flexWrap: 'wrap' }}>
-              <span className={`badge ${
-                planResult.riskLevel === 'low' ? 'badge-success'
-                : planResult.riskLevel === 'medium' ? 'badge-warning'
-                : 'badge-error'
-              }`}>
-                {planResult.riskLevel} risk
-              </span>
-              <span className={`badge ${planResult.approved ? 'badge-success' : 'badge-warning'}`}>
-                {planResult.approved ? '✓ Auto-Approved' : '⚠ Needs Confirmation'}
-              </span>
+            <div style={{ display: 'flex', gap: 'var(--spacing-xs)', marginTop: 'var(--spacing-sm)' }}>
+              <button
+                id="panel-reject-btn"
+                className="btn btn-secondary btn-sm"
+                onClick={rejectPendingAction}
+                style={{ flex: 1 }}
+              >
+                Reject
+              </button>
+              <button
+                id="panel-approve-btn"
+                className="btn btn-primary btn-sm"
+                onClick={confirmPendingAction}
+                style={{ flex: 1 }}
+              >
+                Approve & Run
+              </button>
             </div>
-            <div className="lumina-action-reasoning">
-              {planResult.reasoning}
+          </div>
+        )}
+
+        {/* Error message */}
+        {error && (
+          <div className="lumina-action-proposal animate-fade-in" style={{ border: '1px solid var(--color-error)' }}>
+            <div className="lumina-action-title" style={{ color: 'var(--color-error)' }}>
+              ❌ Loop Failure
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--color-error)', fontFamily: 'var(--font-mono)' }}>
+              {error.message}
             </div>
           </div>
         )}

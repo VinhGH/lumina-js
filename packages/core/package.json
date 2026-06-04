@@ -24,6 +24,8 @@
   },
   "dependencies": {
     "@lumina/contracts": "workspace:*",
+    "@lumina/workflow": "workspace:*",
+    "@lumina/memory": "workspace:*",
     "@lumina/security": "workspace:*",
     "@lumina/retrieval": "workspace:*",
     "@lumina/adapters": "workspace:*",

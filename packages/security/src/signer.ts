@@ -2,7 +2,7 @@
 // Strategy Pattern: ISigner interface with LocalSigner and BackendSigner implementations.
 // Principle: LLM NEVER HAS AUTHORITY — the token is the cryptographic proof of authorization.
 
-import { createHmac } from 'node:crypto';
+import crypto from 'node:crypto';
 import type { RuntimeAction, SecurityContext, SecurityToken, RiskLevel } from '@lumina/contracts';
 
 // ─── HMAC Payload ────────────────────────────────────────────────────────────
@@ -40,7 +40,19 @@ function computeHmac(payload: HmacPayload, secret: string): string {
     riskLevel: payload.riskLevel,
     expiration: payload.expiration,
   });
-  return createHmac('sha256', secret).update(canonical).digest('hex');
+  
+  if (crypto && typeof crypto.createHmac === 'function') {
+    return crypto.createHmac('sha256', secret).update(canonical).digest('hex');
+  }
+
+  // Fallback for browser environments (LocalSigner should not be used in browser prod)
+  let hash = 0;
+  const str = canonical + secret;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return 'mock-sig-' + Math.abs(hash).toString(16);
 }
 
 // ─── Token Expiration ─────────────────────────────────────────────────────────

@@ -42,3 +42,11 @@ export type {
 
 // ─── Utils ───────────────────────────────────────────────────────────────────
 export { randomUUID, formatMs } from './utils.js';
+
+// ─── Agent Runtime & Event Bus ───────────────────────────────────────────────
+export { AgentRuntime } from './agent-runtime.js';
+export type { RuntimeConfig, AgentStatus, RuntimeState } from './agent-runtime.js';
+export { EventBus } from './event-bus.js';
+export type { RuntimeEventMap, RuntimeEventKey, RuntimeEventListener } from './event-bus.js';
+export { RuleBasedLLMAdapter } from './adapters/rule-based.adapter.js';
+

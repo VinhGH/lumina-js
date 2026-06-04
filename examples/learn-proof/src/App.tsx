@@ -2,8 +2,8 @@
 // Main application — manages routing between pages and the Lumina panel
 
 import React, { useState } from 'react';
-import type { AppState, AppPage, Course, Lesson } from './store/app-store.js';
-import { initialAppState, MOCK_COURSES, MOCK_LESSONS } from './store/app-store.js';
+import type { AppPage, Course, Lesson } from './store/app-store.js';
+import { MOCK_COURSES, MOCK_LESSONS } from './store/app-store.js';
 import { LuminaPanel } from './components/LuminaPanel.js';
 import { LoginPage } from './pages/LoginPage.js';
 import { CourseListPage } from './pages/CourseListPage.js';
@@ -11,6 +11,7 @@ import { LessonListPage } from './pages/LessonListPage.js';
 import { ExercisePage } from './pages/ExercisePage.js';
 import { ResultPage } from './pages/ResultPage.js';
 import type { WorkflowStateId } from '@lumina/contracts';
+import { useLumina } from '@lumina/react';
 
 const WORKFLOW_STATES = [
   { state: 'login', label: 'Login' },
@@ -23,95 +24,89 @@ const WORKFLOW_STATES = [
   { state: 'result', label: 'Result' },
 ];
 
+function getAppPageFromState(stateId: string): AppPage {
+  switch (stateId) {
+    case 'login': return 'login';
+    case 'course-select': return 'courses';
+    case 'lesson-select': return 'lessons';
+    case 'read-material': return 'material';
+    case 'open-exercise':
+    case 'submit-proof':
+    case 'verification':
+      return 'exercise';
+    case 'result': return 'result';
+    default: return 'login';
+  }
+}
+
 export default function App() {
-  const [state, setState] = useState<AppState>(initialAppState);
+  const { currentState, reset: runtimeReset, advanceState, updateGoalContext } = useLumina();
+  const [state, setState] = useState({
+    selectedCourse: null as Course | null,
+    selectedLesson: null as Lesson | null,
+    user: null as { name: string; email: string; avatar: string } | null,
+    isLoggedIn: false,
+  });
+
+  const currentPage = getAppPageFromState(currentState);
 
   const navigate = (page: AppPage, nextState?: WorkflowStateId) => {
-    setState((prev) => ({
-      ...prev,
-      currentPage: page,
-      currentState: nextState ?? prev.currentState,
-      goalState: {
-        ...prev.goalState,
-        currentState: nextState ?? prev.currentState,
-      },
-    }));
+    if (nextState) {
+      advanceState(nextState);
+    }
   };
 
   const handleLogin = (email: string) => {
     setState((prev) => ({
       ...prev,
-      currentPage: 'courses',
-      currentState: 'course-select',
       isLoggedIn: true,
       user: {
         name: email.split('@')[0] ?? 'User',
         email,
         avatar: (email[0] ?? 'U').toUpperCase(),
       },
-      goalState: {
-        currentState: 'course-select',
-        context: {},
-      },
     }));
+    advanceState('course-select');
   };
 
   const handleSelectCourse = (course: Course) => {
     setState((prev) => ({
       ...prev,
-      currentPage: 'lessons',
-      currentState: 'lesson-select',
       selectedCourse: course,
-      goalState: {
-        currentState: 'lesson-select',
-        context: {
-          ...prev.goalState.context,
-          courseId: course.id,
-        },
-      },
     }));
+    updateGoalContext({ courseId: course.id });
+    advanceState('lesson-select');
   };
 
   const handleSelectLesson = (lesson: Lesson) => {
-    const page: AppPage = lesson.type === 'exercise' ? 'exercise' : 'material';
-    const stateId = lesson.type === 'exercise' ? 'submit-proof' : 'read-material';
     setState((prev) => ({
       ...prev,
-      currentPage: page,
-      currentState: stateId,
       selectedLesson: lesson,
-      goalState: {
-        ...prev.goalState,
-        currentState: stateId,
-        context: {
-          ...prev.goalState.context,
-          lessonId: lesson.id,
-        },
-      },
     }));
+    const nextState = lesson.type === 'exercise' ? 'submit-proof' : 'read-material';
+    updateGoalContext({ lessonId: lesson.id });
+    advanceState(nextState);
   };
 
   const handleSubmitProof = () => {
-    setState((prev) => ({
-      ...prev,
-      currentPage: 'result',
-      currentState: 'result',
-      goalState: {
-        ...prev.goalState,
-        currentState: 'result',
-      },
-    }));
+    advanceState('result');
   };
 
   const handleRestart = () => {
-    setState(initialAppState);
+    runtimeReset();
+    setState({
+      selectedCourse: null,
+      selectedLesson: null,
+      user: null,
+      isLoggedIn: false,
+    });
   };
 
-  const currentStateIndex = WORKFLOW_STATES.findIndex((s) => s.state === state.currentState);
+  const currentStateIndex = WORKFLOW_STATES.findIndex((s) => s.state === currentState);
   const isLoggedIn = state.isLoggedIn;
 
   const renderPage = () => {
-    switch (state.currentPage) {
+    switch (currentPage) {
       case 'login':
         return <LoginPage onLogin={handleLogin} />;
       case 'courses':

@@ -1,4 +1,4 @@
 {
-  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.tsdk": "D:/Lumina-js/lumina-js/node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true
 }
