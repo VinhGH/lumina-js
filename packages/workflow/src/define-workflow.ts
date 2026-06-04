@@ -1,7 +1,16 @@
-import type { WorkflowDefinition, WorkflowTransition, StatePolicy, WorkflowStateId } from '@lumina/contracts';
+import type {
+  WorkflowDefinition,
+  WorkflowTransition,
+  StatePolicy,
+  WorkflowStateId,
+} from "@lumina/contracts";
 
 type TupleTransition<T extends string> = readonly [T, T];
-type ObjectTransition<T extends string> = { from: T; to: T; condition?: string };
+type ObjectTransition<T extends string> = {
+  from: T;
+  to: T;
+  condition?: string;
+};
 
 export interface WorkflowInput<T extends string> {
   id: string;
@@ -14,7 +23,10 @@ export interface WorkflowInput<T extends string> {
   metadata?: Record<string, unknown>;
 }
 
-export interface TypedWorkflowDefinition<T extends string> extends Omit<WorkflowDefinition, 'states' | 'initialState'> {
+export interface TypedWorkflowDefinition<T extends string> extends Omit<
+  WorkflowDefinition,
+  "states" | "initialState"
+> {
   readonly states: readonly T[];
   readonly initialState: T;
 }
@@ -42,11 +54,13 @@ export function defineWorkflow<T extends string>(
   return {
     id: input.id,
     name: input.name,
-    version: input.version || '1.0.0',
+    version: input.version || "1.0.0",
     states: input.states as unknown as WorkflowStateId[],
     transitions,
     initialState: input.initialState,
-    statePolicies: input.statePolicies as Record<WorkflowStateId, StatePolicy> | undefined,
+    statePolicies: input.statePolicies as
+      | Record<WorkflowStateId, StatePolicy>
+      | undefined,
     metadata: input.metadata,
   } as unknown as TypedWorkflowDefinition<T>;
 }
