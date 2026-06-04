@@ -1,13 +1,12 @@
-// packages/core/src/event-bus.ts
-// EventBus — generic event system for Lumina Agent Runtime events
+import type { SIRResult, RuntimeAction, PolicyDecision } from '@lumina/contracts';
 
 export type RuntimeEventMap = {
   'loop-started': { intent: string };
   'loop-finished': { status: string };
-  'scan-complete': any; // SIRResult
-  'plan-created': any; // RuntimeAction
-  'approval-required': { action: any; decision: any };
-  'action-executed': { action: any; result: any };
+  'scan-complete': SIRResult;
+  'plan-created': RuntimeAction;
+  'approval-required': { action: RuntimeAction; decision: PolicyDecision };
+  'action-executed': { action: RuntimeAction; result: any };
   'state-transition': { fromState: string; toState: string };
   'error': Error;
 };

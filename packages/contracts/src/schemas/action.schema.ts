@@ -30,6 +30,7 @@ export const RuntimeActionSchema = z.object({
   workflowState: z.string().optional(),
   timestamp: z.number().int().positive(),
   intent: z.string().optional(),
+  confidence: z.number().min(0).max(1).optional(),
 });
 
 export const ActionResultSchema = z.object({

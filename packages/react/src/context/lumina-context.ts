@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { GoalState, WorkflowStateId, SecurityContext, SIRResult, RuntimeAction } from '@lumina/contracts';
-import type { AgentStatus } from '@lumina/core';
+import type { AgentStatus, AgentRuntime } from '@lumina/core';
 
 export interface LuminaRuntimeState {
   /** Current workflow state */
@@ -22,7 +22,7 @@ export interface LuminaRuntimeState {
   error: Error | null;
 
   /** Core AgentRuntime instance */
-  runtime: any;
+  runtime: AgentRuntime;
 
   /** Security context (read-only) */
   securityContext: SecurityContext | null;

@@ -82,6 +82,7 @@ export class Planner {
       workflowState: currentState,
       timestamp: Date.now(),
       intent,
+      confidence: llmResponse.confidence,
     };
 
     // Zod validation

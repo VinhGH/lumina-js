@@ -1,131 +1,3 @@
-// apps/learn-proof-runtime/src/components/LuminaPanel.tsx
-// The Lumina.js AI panel — shows intent input, SIR candidates, action proposals
-// This is the core demonstration of the Lumina.js runtime
-
-import React, { useState, useRef } from 'react';
-import type { NodeFingerprint } from '@lumina/contracts';
-import type { AppPage } from '../store/app-store.js';
-import type { AppState } from '../store/app-store.js';
-
-interface LuminaPipelineStep {
-  id: string;
-  label: string;
-  description: string;
-}
-
-const PIPELINE_STEPS: LuminaPipelineStep[] = [
-  { id: 'scouter', label: 'Scouter', description: 'DOM Tree Shaking' },
-  { id: 'intent', label: 'Intent Match', description: 'BM25 + Fuse.js' },
-  { id: 'graph', label: 'Graph Rank', description: 'Topology Boost' },
-  { id: 'planner', label: 'Planner', description: 'LLM Proposal' },
-  { id: 'security', label: 'Security', description: 'Policy Engine' },
-];
-
-interface MockSIRResult {
-  candidates: Array<{
-    luminaId: string;
-    tag: string;
-    label: string;
-    capability: string;
-    score: number;
-    state?: string;
-  }>;
-  stagesMs: { scouter: number; intentMatch: number; graphRank: number };
-}
-
-interface MockPlanResult {
-  actionType: string;
-  targetNodeId: string;
-  reasoning: string;
-  confidence: number;
-  approved: boolean;
-  riskLevel: string;
-}
-
-// Mock SIR results based on current page
-function getMockSIRResult(intent: string, page: AppPage): MockSIRResult {
-  const lowerIntent = intent.toLowerCase();
-
-  if (page === 'login') {
-    if (lowerIntent.includes('email') || lowerIntent.includes('enter')) {
-      return {
-        candidates: [
-          { luminaId: 'lumina-0', tag: 'input', label: 'Email address', capability: 'fill-input', score: 0.97, state: 'login' },
-          { luminaId: 'lumina-1', tag: 'input', label: 'Password', capability: 'fill-input', score: 0.72, state: 'login' },
-          { luminaId: 'lumina-2', tag: 'button', label: 'Sign In', capability: 'click', score: 0.45, state: 'login' },
-        ],
-        stagesMs: { scouter: 12, intentMatch: 28, graphRank: 5 },
-      };
-    }
-    if (lowerIntent.includes('sign in') || lowerIntent.includes('login') || lowerIntent.includes('submit')) {
-      return {
-        candidates: [
-          { luminaId: 'lumina-2', tag: 'button', label: 'Sign In', capability: 'click', score: 0.95, state: 'login' },
-          { luminaId: 'lumina-0', tag: 'input', label: 'Email address', capability: 'fill-input', score: 0.55, state: 'login' },
-          { luminaId: 'lumina-1', tag: 'input', label: 'Password', capability: 'fill-input', score: 0.42, state: 'login' },
-        ],
-        stagesMs: { scouter: 11, intentMatch: 24, graphRank: 6 },
-      };
-    }
-  }
-
-  if (page === 'courses') {
-    return {
-      candidates: [
-        { luminaId: 'lumina-10', tag: 'button', label: 'Introduction to Blockchain', capability: 'click', score: 0.91, state: 'course-select' },
-        { luminaId: 'lumina-11', tag: 'button', label: 'Zero Knowledge Proofs', capability: 'click', score: 0.78, state: 'course-select' },
-        { luminaId: 'lumina-12', tag: 'button', label: 'Advanced Smart Contracts', capability: 'click', score: 0.65, state: 'course-select' },
-        { luminaId: 'lumina-13', tag: 'input', label: 'Search courses', capability: 'fill-input', score: 0.32 },
-      ],
-      stagesMs: { scouter: 18, intentMatch: 35, graphRank: 8 },
-    };
-  }
-
-  if (page === 'exercise') {
-    if (lowerIntent.includes('submit') || lowerIntent.includes('proof')) {
-      return {
-        candidates: [
-          { luminaId: 'lumina-51', tag: 'button', label: 'Submit Proof', capability: 'submit-proof', score: 0.97, state: 'submit-proof' },
-          { luminaId: 'lumina-50', tag: 'textarea', label: 'Your proof', capability: 'fill-input', score: 0.82, state: 'submit-proof' },
-        ],
-        stagesMs: { scouter: 14, intentMatch: 22, graphRank: 4 },
-      };
-    }
-    return {
-      candidates: [
-        { luminaId: 'lumina-50', tag: 'textarea', label: 'Your proof (write your solution here)', capability: 'fill-input', score: 0.94, state: 'submit-proof' },
-        { luminaId: 'lumina-51', tag: 'button', label: 'Submit Proof', capability: 'submit-proof', score: 0.88, state: 'submit-proof' },
-        { luminaId: 'lumina-52', tag: 'button', label: 'Save Draft', capability: 'click', score: 0.25 },
-      ],
-      stagesMs: { scouter: 16, intentMatch: 29, graphRank: 7 },
-    };
-  }
-
-  // Default
-  return {
-    candidates: [
-      { luminaId: 'lumina-0', tag: 'button', label: 'Primary Action', capability: 'click', score: 0.85 },
-      { luminaId: 'lumina-1', tag: 'input', label: 'Input Field', capability: 'fill-input', score: 0.62 },
-    ],
-    stagesMs: { scouter: 15, intentMatch: 30, graphRank: 6 },
-  };
-}
-
-function getMockPlanResult(intent: string, candidate: MockSIRResult['candidates'][0]): MockPlanResult {
-  const isHighRisk = candidate.capability === 'submit-proof';
-  return {
-    actionType: candidate.capability === 'fill-input' ? 'fill-input'
-      : candidate.capability === 'submit-proof' ? 'submit-proof'
-      : candidate.capability === 'navigate-page' ? 'navigate'
-      : 'click',
-    targetNodeId: candidate.luminaId,
-    reasoning: `Selected "${candidate.label}" (score: ${candidate.score.toFixed(2)}) for intent: "${intent}". Capability: ${candidate.capability}.`,
-    confidence: candidate.score,
-    approved: !isHighRisk,
-    riskLevel: isHighRisk ? 'high' : candidate.capability === 'navigate-page' ? 'medium' : 'low',
-  };
-}
-
 import React, { useState, useRef, useEffect } from 'react';
 import type { AppPage } from '../store/app-store.js';
 import { useLumina } from '@lumina/react';
@@ -133,6 +5,7 @@ import { useLumina } from '@lumina/react';
 interface LuminaPanelProps {
   currentPage: AppPage;
 }
+
 
 export function LuminaPanel({ currentPage }: LuminaPanelProps) {
   const {
@@ -156,47 +29,52 @@ export function LuminaPanel({ currentPage }: LuminaPanelProps) {
       return `${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}.${String(now.getMilliseconds()).padStart(3, '0')}`;
     };
 
-    const unsub1 = runtime.eventBus.on('loop-started', ({ intent }) => {
+    const unsub1 = runtime.eventBus.on('loop-started', (payload: any) => {
+      const { intent } = payload;
       setLogs([{ time: formatTime(), event: `Intent received: "${intent}"`, status: 'ok' }]);
     });
 
-    const unsub2 = runtime.eventBus.on('scan-complete', (result) => {
-      setLogs((prev) => [
+    const unsub2 = runtime.eventBus.on('scan-complete', (result: any) => {
+      const durationMs = Math.round(result.stagesMs.scouter + result.stagesMs.intentMatch + result.stagesMs.graphRank);
+      setLogs((prev: any) => [
         ...prev,
-        { time: formatTime(), event: `SIR Pipeline: Scan complete (${result.durationMs}ms)`, status: 'ok' }
+        { time: formatTime(), event: `SIR Pipeline: Scan complete (${durationMs}ms)`, status: 'ok' }
       ]);
     });
 
-    const unsub3 = runtime.eventBus.on('plan-created', (action) => {
-      setLogs((prev) => [
+    const unsub3 = runtime.eventBus.on('plan-created', (action: any) => {
+      setLogs((prev: any) => [
         ...prev,
-        { time: formatTime(), event: `Planner: ${action.type} proposed (confidence: ${(action.confidence * 100).toFixed(0)}%)`, status: 'ok' }
+        { time: formatTime(), event: `Planner: ${action.type} proposed (confidence: ${((action.confidence || 0) * 100).toFixed(0)}%)`, status: 'ok' }
       ]);
     });
 
-    const unsub4 = runtime.eventBus.on('approval-required', ({ decision }) => {
-      setLogs((prev) => [
+    const unsub4 = runtime.eventBus.on('approval-required', (payload: any) => {
+      const { decision } = payload;
+      setLogs((prev: any) => [
         ...prev,
         { time: formatTime(), event: `PolicyEngine: Approval required (risk: ${decision.riskLevel})`, status: 'warn' }
       ]);
     });
 
-    const unsub5 = runtime.eventBus.on('action-executed', ({ action }) => {
-      setLogs((prev) => [
+    const unsub5 = runtime.eventBus.on('action-executed', (payload: any) => {
+      const { action } = payload;
+      setLogs((prev: any) => [
         ...prev,
         { time: formatTime(), event: `Action executed: ${action.type}`, status: 'ok' }
       ]);
     });
 
-    const unsub6 = runtime.eventBus.on('state-transition', ({ toState }) => {
-      setLogs((prev) => [
+    const unsub6 = runtime.eventBus.on('state-transition', (payload: any) => {
+      const { toState } = payload;
+      setLogs((prev: any) => [
         ...prev,
         { time: formatTime(), event: `FSM transition: -> ${toState}`, status: 'ok' }
       ]);
     });
 
-    const unsub7 = runtime.eventBus.on('error', (err) => {
-      setLogs((prev) => [
+    const unsub7 = runtime.eventBus.on('error', (err: any) => {
+      setLogs((prev: any) => [
         ...prev,
         { time: formatTime(), event: `Error: ${err.message}`, status: 'error' }
       ]);
@@ -294,12 +172,12 @@ export function LuminaPanel({ currentPage }: LuminaPanelProps) {
         )}
 
         {/* SIR Candidates */}
-        {lastSIRResult && lastSIRResult.candidates.length > 0 && (
+        {lastSIRResult && lastSIRResult.topNodes.length > 0 && (
           <div className="lumina-candidates animate-fade-in">
             <div className="lumina-candidate-title">
-              SIR Candidates ({lastSIRResult.durationMs}ms)
+              SIR Candidates ({Math.round(lastSIRResult.stagesMs.scouter + lastSIRResult.stagesMs.intentMatch + lastSIRResult.stagesMs.graphRank)}ms)
             </div>
-            {lastSIRResult.candidates.map((node, idx) => (
+            {lastSIRResult.topNodes.map((node, idx) => (
               <div key={node.luminaId} className="lumina-candidate-node">
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span className="lumina-candidate-label">{node.label}</span>

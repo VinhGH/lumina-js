@@ -55,6 +55,9 @@ export type RuntimeAction = {
 
   /** Human-readable intent description for auditing */
   intent?: string;
+
+  /** Confidence score from the planner (0.0 to 1.0) */
+  confidence?: number;
 };
 
 /**
