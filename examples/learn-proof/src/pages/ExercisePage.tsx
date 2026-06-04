@@ -1,7 +1,7 @@
 // apps/learn-proof-runtime/src/pages/ExercisePage.tsx
 
 import React, { useState } from 'react';
-import type { Course, Lesson } from '../store/app-store.js';
+import type { Course, Lesson } from '../store/app-store';
 
 interface ExercisePageProps {
   lesson: Lesson;

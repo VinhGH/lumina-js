@@ -1,7 +1,7 @@
 // apps/learn-proof-runtime/src/pages/ResultPage.tsx
 
 import React from 'react';
-import type { Lesson } from '../store/app-store.js';
+import type { Lesson } from '../store/app-store';
 
 interface ResultPageProps {
   lesson: Lesson | null;

@@ -2,14 +2,14 @@
 // Main application — manages routing between pages and the Lumina panel
 
 import React, { useState } from 'react';
-import type { AppPage, Course, Lesson } from './store/app-store.js';
-import { MOCK_COURSES, MOCK_LESSONS } from './store/app-store.js';
-import { LuminaPanel } from './components/LuminaPanel.js';
-import { LoginPage } from './pages/LoginPage.js';
-import { CourseListPage } from './pages/CourseListPage.js';
-import { LessonListPage } from './pages/LessonListPage.js';
-import { ExercisePage } from './pages/ExercisePage.js';
-import { ResultPage } from './pages/ResultPage.js';
+import type { AppPage, Course, Lesson } from './store/app-store';
+import { MOCK_COURSES, MOCK_LESSONS } from './store/app-store';
+import { LuminaPanel } from './components/LuminaPanel';
+import { LoginPage } from './pages/LoginPage';
+import { CourseListPage } from './pages/CourseListPage';
+import { LessonListPage } from './pages/LessonListPage';
+import { ExercisePage } from './pages/ExercisePage';
+import { ResultPage } from './pages/ResultPage';
 import type { WorkflowStateId } from '@lumina/contracts';
 import { useLumina } from '@lumina/react';
 
@@ -40,7 +40,15 @@ function getAppPageFromState(stateId: string): AppPage {
 }
 
 export default function App() {
-  const { currentState, reset: runtimeReset, advanceState, updateGoalContext } = useLumina();
+  const { currentState, reset: runtimeReset, advanceState, updateGoalContext, runtime } = useLumina();
+  
+  React.useEffect(() => {
+    const el = document.getElementById('workspace-root');
+    if (el && runtime) {
+      (runtime as any).rootElement = el;
+    }
+  }, [runtime, currentState]);
+
   const [state, setState] = useState({
     selectedCourse: null as Course | null,
     selectedLesson: null as Lesson | null,
@@ -144,11 +152,11 @@ export default function App() {
   if (!isLoggedIn) {
     return (
       <div style={{ display: 'flex', minHeight: '100vh' }}>
-        <main style={{ flex: 1 }}>
+        <main id="workspace-root" style={{ flex: 1 }}>
           {renderPage()}
         </main>
         <div style={{ width: 360 }}>
-          <LuminaPanel currentPage={state.currentPage} />
+          <LuminaPanel currentPage={currentPage} />
         </div>
       </div>
     );
@@ -166,7 +174,7 @@ export default function App() {
 
         <div className="header-user">
           <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-            {state.currentState}
+            {currentState}
           </span>
           <div
             id="user-avatar"
@@ -182,7 +190,7 @@ export default function App() {
       <nav className="sidebar">
         <div className="sidebar-section-title">Navigation</div>
         <button
-          className={`sidebar-item ${state.currentPage === 'courses' ? 'active' : ''}`}
+          className={`sidebar-item ${currentPage === 'courses' ? 'active' : ''}`}
           onClick={() => navigate('courses', 'course-select')}
           id="nav-courses"
         >
@@ -191,7 +199,7 @@ export default function App() {
         </button>
         {state.selectedCourse && (
           <button
-            className={`sidebar-item ${state.currentPage === 'lessons' ? 'active' : ''}`}
+            className={`sidebar-item ${currentPage === 'lessons' ? 'active' : ''}`}
             onClick={() => navigate('lessons', 'lesson-select')}
             id="nav-lessons"
           >
@@ -199,7 +207,7 @@ export default function App() {
             {state.selectedCourse.title}
           </button>
         )}
-        {state.selectedLesson && state.currentPage === 'exercise' && (
+        {state.selectedLesson && currentPage === 'exercise' && (
           <button
             className={`sidebar-item active`}
             id="nav-exercise"
@@ -231,12 +239,12 @@ export default function App() {
       </nav>
 
       {/* Main Content */}
-      <main className="main-content">
+      <main id="workspace-root" className="main-content">
         {renderPage()}
       </main>
 
       {/* Lumina Panel */}
-      <LuminaPanel currentPage={state.currentPage} />
+      <LuminaPanel currentPage={currentPage} />
     </div>
   );
 }

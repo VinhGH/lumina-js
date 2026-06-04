@@ -1,7 +1,7 @@
 // apps/learn-proof-runtime/src/pages/CourseListPage.tsx
 
 import React from 'react';
-import type { Course } from '../store/app-store.js';
+import type { Course } from '../store/app-store';
 
 interface CourseListPageProps {
   courses: Course[];

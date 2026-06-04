@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import type { AppPage } from '../store/app-store.js';
+import type { AppPage } from '../store/app-store';
 import { useLumina } from '@lumina/react';
 
 interface LuminaPanelProps {

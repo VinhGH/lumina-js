@@ -1,10 +1,10 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './App.js';
+import App from './App';
 import './index.css';
 import { LuminaProvider } from '@lumina/react';
 import { AgentRuntime, RuleBasedLLMAdapter } from '@lumina/core';
-import { learnProofWorkflow } from './lumina/workflow.js';
+import { learnProofWorkflow } from './lumina/workflow';
 
 const runtime = new AgentRuntime({
   workflowDefinition: learnProofWorkflow,

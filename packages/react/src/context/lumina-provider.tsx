@@ -20,6 +20,45 @@ export function LuminaProvider({ children, runtime }: LuminaProviderProps) {
     return unsubscribe;
   }, [runtime]);
 
+  // Route transition observer - keeps FSM synchronized with route changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleLocationChange = async () => {
+      try {
+        const root = (runtime as any).rootElement ?? document.body;
+        const nextScan = await runtime.scanAdapter.scan(root);
+        // Access private sync method to update FSM state from new DOM
+        if (typeof (runtime as any).synchronizeFSMFromObservation === 'function') {
+          (runtime as any).synchronizeFSMFromObservation(nextScan.nodes);
+        }
+      } catch (e) {
+        console.warn('[Lumina] Failed to scan DOM on route change:', e);
+      }
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+
+    const originalPushState = window.history.pushState;
+    const originalReplaceState = window.history.replaceState;
+
+    window.history.pushState = function (...args) {
+      originalPushState.apply(this, args);
+      handleLocationChange();
+    };
+
+    window.history.replaceState = function (...args) {
+      originalReplaceState.apply(this, args);
+      handleLocationChange();
+    };
+
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.history.pushState = originalPushState;
+      window.history.replaceState = originalReplaceState;
+    };
+  }, [runtime]);
+
   const value = {
     currentState: runtimeState.currentState,
     goalState: runtimeState.goalState,
