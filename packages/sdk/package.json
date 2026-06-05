@@ -1,0 +1,49 @@
+{
+  "name": "@lumina/sdk",
+  "version": "1.0.0-alpha",
+  "description": "Lumina.js Browser SDK — Single entry point for workflow-aware web AI applications",
+  "private": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "fuse.js": "^7.0.0",
+    "minisearch": "^7.1.2",
+    "zod": "^3.23.8"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@lumina/contracts": "workspace:*",
+    "@lumina/core": "workspace:*",
+    "@lumina/react": "workspace:*",
+    "@lumina/workflow": "workspace:*",
+    "@lumina/memory": "workspace:*",
+    "@lumina/security": "workspace:*",
+    "@lumina/retrieval": "workspace:*",
+    "@lumina/adapters": "workspace:*",
+    "@lumina/tools": "workspace:*",
+    "@types/react": "^18.3.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  },
+  "license": "MIT"
+}
