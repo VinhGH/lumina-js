@@ -2,9 +2,19 @@ import type { ExecutionAdapter } from '../execution-adapter.interface.js';
 
 export class DOMExecutionAdapter implements ExecutionAdapter {
   private getElement(luminaId: string): Element {
-    const el = document.querySelector(`[data-lumina-id="${luminaId}"]`);
-    if (!el) throw new Error(`[DOMExecutionAdapter] Node not found: ${luminaId}`);
-    return el;
+    // 1. Try property and attribute search first across all elements
+    const all = document.querySelectorAll('*');
+    for (const el of Array.from(all)) {
+      if ((el as any).__lumina_id === luminaId || el.getAttribute('data-lumina-id') === luminaId) {
+        return el;
+      }
+    }
+
+    // 2. Try data-lumina-semantic as fallback
+    const semanticEl = document.querySelector(`[data-lumina-semantic="${luminaId}"]`);
+    if (semanticEl) return semanticEl;
+
+    throw new Error(`[DOMExecutionAdapter] Node not found: ${luminaId}`);
   }
 
   async click(luminaId: string): Promise<void> {
@@ -12,8 +22,28 @@ export class DOMExecutionAdapter implements ExecutionAdapter {
   }
 
   async fill(luminaId: string, value: string): Promise<void> {
-    const el = this.getElement(luminaId) as HTMLInputElement;
-    el.value = value;
+    const el = this.getElement(luminaId) as HTMLInputElement | HTMLTextAreaElement;
+
+    // React tracks input value via its own internal fiber.
+    // Setting el.value directly bypasses React's onChange handler.
+    // We must use the native input value setter to properly trigger React's
+    // synthetic event system and update useState.
+    const prototype = el.tagName === 'TEXTAREA'
+      ? window.HTMLTextAreaElement.prototype
+      : window.HTMLInputElement.prototype;
+
+    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+      prototype,
+      'value'
+    )?.set;
+
+    if (nativeInputValueSetter) {
+      nativeInputValueSetter.call(el, value);
+    } else {
+      el.value = value;
+    }
+
+    // Dispatch both input and change events — React listens to both
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
   }
@@ -38,7 +68,9 @@ export class DOMExecutionAdapter implements ExecutionAdapter {
   }
 
   async exists(luminaId: string): Promise<boolean> {
-    const el = document.querySelector(`[data-lumina-id="${luminaId}"]`);
+    const el =
+      document.querySelector(`[data-lumina-id="${luminaId}"]`) ??
+      document.querySelector(`[data-lumina-semantic="${luminaId}"]`);
     return el !== null;
   }
 }

@@ -38,6 +38,9 @@ export class DOMScanAdapter implements ScanAdapter {
       if (!this.isVisible(el)) {
         continue;
       }
+      if (el.closest('aside')) {
+        continue;
+      }
 
       const luminaId = `lumina-${++_luminaCounter}`;
       this.stampId(el, luminaId);
@@ -73,7 +76,9 @@ export class DOMScanAdapter implements ScanAdapter {
   }
 
   stampId(node: unknown, luminaId: string): void {
-    (node as Element).setAttribute('data-lumina-id', luminaId);
+    const el = node as any;
+    el.setAttribute('data-lumina-id', luminaId);
+    el.__lumina_id = luminaId;
   }
 
   isVisible(node: unknown): boolean {

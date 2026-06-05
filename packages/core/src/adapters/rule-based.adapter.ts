@@ -24,13 +24,13 @@ export class RuleBasedLLMAdapter implements ILLMAdapter {
     // 1. Logic for 'login' state
     if (currentState === 'login' || intent.includes('login') || intent.includes('sign in') || intent.includes('đăng nhập')) {
       const emailInput = candidates.find(
-        (c) => c.semanticType === 'primary-input' || c.label.toLowerCase().includes('email')
+        (c) => c.semanticType === 'primary-input' || c.semanticType === 'email' || c.label.toLowerCase().includes('email')
       );
       const passwordInput = candidates.find(
-        (c) => c.label.toLowerCase().includes('password')
+        (c) => c.semanticType === 'password' || c.label.toLowerCase().includes('password')
       );
       const submitBtn = candidates.find(
-        (c) => c.semanticType === 'submit-button' || c.label.toLowerCase().includes('sign in')
+        (c) => c.semanticType === 'submit-button' || c.semanticType === 'action' || c.label.toLowerCase().includes('sign in')
       );
 
       if (intent.includes('email') || intent.includes('nhập email') || intent.includes('username') || intent.includes('student')) {
